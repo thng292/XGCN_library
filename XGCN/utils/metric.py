@@ -39,44 +39,46 @@ def get_rank(A):
 def one_pos_metrics(S):
     num_samples = S.shape[0]
     num_scores = S.shape[1]
-    
+
     # add small noises
     S += np.random.uniform(low=-1e-6, high=1e-6, size=S.shape)
-    
+
     rank = get_rank(S)
-    
+
     # top1 = rank == 0
     # top3 = rank < 3
     top20 = rank < 20
     top50 = rank < 50
     top100 = rank < 100
     top300 = rank < 300
-    
-    results = {
-        "auc": (num_scores - 1 - rank).mean() / (num_scores - 1)
-    }
-    
+
+    results = {"auc": (num_scores - 1 - rank).mean() / (num_scores - 1)}
+
     # ndcg
     w = _get_ndcg_weights(num_scores)
-    results.update({
-        # "ndcg": w[rank].sum() / num_samples,
-        # "n1": top1.mean(),
-        # "n3": w[rank[top3]].sum() / num_samples,
-        # "n10": w[rank[top10]].sum() / num_samples,
-        "n20": w[rank[top20]].sum() / num_samples,
-        "n50": w[rank[top50]].sum() / num_samples,
-        "n100": w[rank[top100]].sum() / num_samples,
-        "n300": w[rank[top300]].sum() / num_samples,
-    })
-    
+    results.update(
+        {
+            # "ndcg": w[rank].sum() / num_samples,
+            # "n1": top1.mean(),
+            # "n3": w[rank[top3]].sum() / num_samples,
+            # "n10": w[rank[top10]].sum() / num_samples,
+            "n20": w[rank[top20]].sum() / num_samples,
+            "n50": w[rank[top50]].sum() / num_samples,
+            "n100": w[rank[top100]].sum() / num_samples,
+            "n300": w[rank[top300]].sum() / num_samples,
+        }
+    )
+
     # recall
-    results.update({
-        "r20": top20.mean(),
-        "r50": top50.mean(),
-        "r100": top100.mean(),
-        "r300": top300.mean(),
-    })
-    
+    results.update(
+        {
+            "r20": top20.mean(),
+            "r50": top50.mean(),
+            "r100": top100.mean(),
+            "r300": top300.mean(),
+        }
+    )
+
     # # mrr
     # w = _get_mrr_weights(num_scores)
     # results.update({
@@ -97,8 +99,11 @@ def argtopk(a, k):
     if k == 1:
         return np.array([np.argmax(a)])
     else:
-        ind = np.argpartition(a, -k)[-k:]
-        return ind[np.argsort(a[ind])][::-1]
+        # ind = np.argpartition(a, -k)[-k:]
+        # return ind[np.argsort(a[ind])][::-1]
+
+        ind = np.argsort(a)[-k:]
+        return ind[::-1]
 
 
 @numba.jit(nopython=True, parallel=True)
@@ -107,41 +112,41 @@ def multi_pos_metrics(pos_list, all_target_score):
         Dict.empty(key_type=types.unicode_type, value_type=types.float32)
         for _ in range(len(pos_list))
     ]
-    
-    all_target_score += np.random.uniform(low=-1e-6, high=1e-6, size=all_target_score.shape)
-    
+
+    all_target_score += np.random.uniform(-1e-6, 1e-6, all_target_score.shape)
+
     topk_list = [20, 50, 100, 300]  # <-- to customize metrics, please modify here
     max_k = topk_list[-1]
-    
+
     ndcg_weights = 1 / np.log2(np.arange(2, max_k + 2))
-    
+
     for i in numba.prange(len(pos_list)):
         pos = pos_list[i]
         pos_set = set(list(pos))
         topk_id = argtopk(all_target_score[i], max_k)
-        
+
         ground_truth_label = np.zeros(max_k)
-        ground_truth_label[:len(pos)] = 1
-        
+        ground_truth_label[: len(pos)] = 1
+
         pred_label = np.zeros(max_k)
         for j in range(max_k):
             v = topk_id[j]
             if v in pos_set:
                 pred_label[j] = 1
-        
+
         results_dict = {}
-        
+
         # calc recall
         for k in topk_list:
-            results_dict['r' + str(k)] = pred_label[:k].sum() / ground_truth_label.sum()
-        
+            results_dict["r" + str(k)] = pred_label[:k].sum() / ground_truth_label.sum()
+
         # calc ndcg
         s = pred_label * ndcg_weights
         truth_s = ground_truth_label * ndcg_weights
         for k in topk_list:
-            results_dict['n' + str(k)] = s[:k].sum() / truth_s[:k].sum()        
+            results_dict["n" + str(k)] = s[:k].sum() / truth_s[:k].sum()
 
         for key in results_dict:
             results_dict_list[i][key] = results_dict[key]
-    
+
     return results_dict_list
