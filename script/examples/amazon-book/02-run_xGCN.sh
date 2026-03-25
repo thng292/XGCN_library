@@ -5,8 +5,8 @@
 # 'r' for 'Recall@', 'n' for 'NDCG@'
 
 # set to your own path:
-all_data_root='/home/sxr/code/XGCN_library/XGCN_data'
-config_file_root='/home/sxr/code/XGCN_library/config'
+all_data_root='.'
+config_file_root='config'
 
 dataset=amazon-book
 model=xGCN
@@ -16,7 +16,7 @@ emb_table_device=$device
 forward_device=$device
 out_emb_table_device=$device
 
-data_root=$all_data_root/dataset/instance_$dataset
+data_root=$all_data_root/data/instance_$dataset
 results_root=$all_data_root/model_output/$dataset/$model/[seed$seed][epoch_sample_ratio1.0]
 
 python -m XGCN.main.run_model --seed $seed \
