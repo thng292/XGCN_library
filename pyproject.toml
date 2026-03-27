@@ -15,6 +15,10 @@ dependencies = [
     "PyYAML==6.0",
     "setuptools~=64.0.0",
     "torch==1.9.0",
+    "torch-cluster",
+    "torch-scatter",
+    "torch-sparse",
+    "torch-spline-conv",
     "torch_geometric==2.0.4",
     "tqdm==4.63.0",
     "wheel==0.46.3",
@@ -30,6 +34,10 @@ members = [".", "."]
 
 [tool.uv.sources]
 hust-xgcn = { workspace = true, editable = true }
+torch-scatter = { url = "https://data.pyg.org/whl/torch-1.9.0%2Bcu102/torch_scatter-2.0.8-cp39-cp39-linux_x86_64.whl" }
+torch-sparse = { url = "https://data.pyg.org/whl/torch-1.9.0%2Bcu102/torch_sparse-0.6.12-cp39-cp39-linux_x86_64.whl" }
+torch-cluster = { url = "https://data.pyg.org/whl/torch-1.9.0%2Bcu102/torch_cluster-1.5.9-cp39-cp39-linux_x86_64.whl" }
+torch-spline-conv = { url = "https://data.pyg.org/whl/torch-1.9.0%2Bcu102/torch_spline_conv-1.2.1-cp39-cp39-linux_x86_64.whl" }
 
 [dependency-groups]
 dev = [
